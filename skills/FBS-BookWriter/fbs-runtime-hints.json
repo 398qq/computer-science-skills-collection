@@ -1,0 +1,96 @@
+{
+  "$schema": "fbs-runtime-hints-v1",
+  "version": "2.1.0",
+  "session": {
+    "skillMdReReadInSession": false,
+    "resumeCardFreshnessHours": 24,
+    "memoryBriefFreshnessHours": 48,
+    "_note": "与 fbs-team-lead / intake-and-routing 对齐：恢复卡 24h、记忆摘要 48h 为不同工件的新鲜度策略，非文档冲突"
+  },
+  "s3": {
+    "maxFilesModifiedPerTurn": 2,
+    "serialEdits": true,
+    "visibilityBeforeEdit": true
+  },
+  "search": {
+    "preflightContractPath": "references/05-ops/search-preflight-contract.json"
+  },
+  "compliance": {
+    "requireIntakeRouterBeforeWork": true,
+    "requireSessionExitOnStop": true,
+    "standardExitUserMessageField": "session-exit JSON 的 userMessage，须原样或等价复述给用户",
+    "_note": "与 audit-skill-runtime-2026-04-13 对齐：仅注入 SKILL 上下文不等于已执行脚本"
+  },
+  "hostMemory": {
+    "operations": ["create", "update", "delete"],
+    "updateRequiresId": true,
+    "deleteOnUserContradiction": true,
+    "authoritativeBookState": ".fbs/smart-memory/ 与 session-exit 落盘",
+    "_note": "宿主系统级记忆与书稿目录真值并行；冲突以用户最新陈述 + .fbs 写盘为准"
+  },
+  "userExperience": {
+    "rulesCenter": "references/01-core/ux-optimization-rules.md",
+    "dialogLayer": "references/03-product/07-ux-design.md",
+    "agentPlaybook": "references/05-ops/ux-agent-playbook.md",
+    "maxNextActions": 3,
+    "recoveryCardLines": 4,
+    "qualityFeedbackStyle": "achievement-oriented",
+    "forbidUserFacingTerms": ["Tier", "调度层", "内部模块代号"],
+    "_note": "对用户只说功能中文名；技术探测信息仅供 Agent 内部使用"
+  },
+  "antiStall": {
+    "intakeFastFlag": "--fast",
+    "scenePackTimeoutMsEnv": "FBS_SCENE_PACK_TIMEOUT_MS",
+    "defaultScenePackTimeoutMs": 15000,
+    "hostMemoryMaxFiles": 24,
+    "hostMemoryMaxCharsPerFile": 98304,
+    "longTaskProgressHintSec": 30,
+    "guide": "references/05-ops/anti-stall-guide.md"
+  },
+  "orchestration": {
+    "strategyDoc": "references/05-ops/agent-task-strategy.md",
+    "multiAgentSyncDoc": "references/05-ops/multi-agent-horizontal-sync.md",
+    "qualityFirst": true,
+    "defaultWritingMode": "serial-single-writer",
+    "signalDrivenAdjustment": true,
+    "_note": "单智能体多任务 / 多智能体：风格一致、防断链、质量优先下的弹性调度"
+  },
+  "strategiesABC": {
+    "A": "真值契约：memory-layer-matrix.md、collect-host-diagnostics、intake firstResponseContext",
+    "B": "宿主增益：Teams 对齐、.workbuddy/memory 退出镜像、二进制登记注入 host-capability",
+    "C": "演进：emit-upgrade-summary、lexicon-governance、propose-lexicon-refresh",
+    "docMatrix": "references/01-core/memory-layer-matrix.md"
+  },
+  "scriptBridge": {
+    "primaryCli": "scripts/fbs-cli-bridge.mjs",
+    "matrixDoc": "references/01-core/skill-cli-bridge-matrix.md",
+    "nonMcpNote": "检索前置合同、企微场景包、乐包等长链路能力保持 Skill+脚本+CLI，不拆 MCP Server"
+  },
+  "trace": {
+    "schemaPath": "references/05-ops/fbs-trace-events.schema.json",
+    "auditRelativeDir": ".fbs/audit",
+    "_note": "JSONL 轨迹，见 fbs-continuous-improvement.md"
+  },
+  "bookIndex": {
+    "snippetRelativePath": ".fbs/index/book-snippet.json",
+    "registryNote": "用户目录 ~/.workbuddy/fbs-book-projects.json"
+  },
+  "evolutionGate": {
+    "scriptsManifest": "scripts/generated/scripts-manifest.json",
+    "improvementDoc": "references/05-ops/fbs-continuous-improvement.md"
+  },
+  "contextCompression": {
+    "policyDoc": "references/05-ops/fbs-context-compression.md"
+  },
+  "auxiliaryTasks": {
+    "tasksDoc": "references/05-ops/fbs-auxiliary-tasks.md"
+  },
+  "hostPresentation": {
+    "integrationDoc": "references/06-plugin/workbuddy-host-integration.md",
+    "userFacingOneLinerJsonPath": "firstResponseContext.userFacingOneLiner",
+    "maxPrimaryActionsInChat": 3,
+    "hideFullSkillAndIntakeJsonFromUserChat": true,
+    "listDirFbsOnlyOnDemand": true,
+    "_note": "宿主默认只在对话区展示 userFacingOneLiner + 最多3个动作；完整 intake JSON 与 SKILL 全文不进主对话流；编排/自检用语（如按版本规范、JSON 输出、不重复读文件）不得与用户气泡混排"
+  }
+}

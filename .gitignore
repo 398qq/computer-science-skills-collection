@@ -1,0 +1,13 @@
+.DS_Store
+node_modules/
+__pycache__/
+.env
+*.log
+*.sqlite
+*.db
+*.pem
+*.key
+id_rsa*
+*.p12
+*.jks
+
