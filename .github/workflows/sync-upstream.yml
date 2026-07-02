@@ -1,0 +1,69 @@
+name: Sync Upstream
+
+# 每周一 UTC 04:00 拉取 bighardperson/computer-science-skills-collection:main
+# 冲突时打 PR 通知手工处理（不强制覆盖 main）
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch: # 允许手动触发
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/bighardperson/computer-science-skills-collection.git || true
+          git fetch upstream
+
+      - name: Fast-forward main to upstream
+        id: ff
+        run: |
+          # 先尝试 fast-forward；如果失败（本地有上游没有的 commit），就 cherry-pick 然后建 PR
+          if git merge --ff-only upstream/main; then
+            echo "ff=true" >> "$GITHUB_OUTPUT"
+            echo "✓ fast-forwarded main to upstream/main"
+          else
+            echo "ff=false" >> "$GITHUB_OUTPUT"
+            echo "✗ cannot fast-forward, will create a sync PR instead"
+            git reset --hard origin/main
+            git checkout -b sync/upstream-$(date +%Y%m%d)
+            # 合并策略：ours 优先（保留本仓库的自定义文件：EVAL.md / MY_PICKS.md / 本 workflow）
+            git merge --no-ff -X ours upstream/main -m "sync: merge upstream/main (manual review needed)"
+          fi
+
+      - name: Push changes
+        if: steps.ff.outputs.ff == 'true'
+        run: git push origin main
+
+      - name: Open sync PR
+        if: steps.ff.outputs.ff == 'false'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: sync/upstream-$(date +%Y%m%d)
+          title: "🔄 Weekly sync: upstream/main → main (manual review)"
+          body: |
+            ## 自动同步
+
+            本周上游 bighardperson/computer-science-skills-collection:main 的更新无法直接 fast-forward（本地有上游没有的 commit，通常是 EVAL.md / MY_PICKS.md / 本 workflow）。
+
+            **冲突策略**：合并时采用 `ours` 优先（保留本仓库的自定义文件），如果上游同名新增了 EVAL.md / MY_PICKS.md / 本 workflow，请人工 review。
+
+            - [ ] 检查上游是否有同名新文件需要保留
+            - [ ] 解决可能的实质内容冲突
+            - [ ] Squash merge or rebase 后删除本分支
+          commit-message: "sync: merge upstream/main"
+          delete-branch: true
